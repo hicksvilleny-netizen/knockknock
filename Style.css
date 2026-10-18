@@ -1,0 +1,39 @@
+:root {
+  --bg-color: #0b0f19;
+  --card-bg: #161b26;
+  --text-main: #ffffff;
+  --text-sub: #94a3b8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; }
+
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.header-brand { display: flex; align-items: center; gap: 16px; }
+.header-brand img { height: 45px; object-fit: contain; }
+h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.badge { background: #1e293b; color: #38bdf8; padding: 8px 18px; border-radius: 20px; font-weight: 700; border: 1px solid #334155; }
+
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; }
+
+.card { background-color: var(--card-bg); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; align-items: center; position: relative; border: 1px solid #242c3d; cursor: pointer; }
+
+.circle-container { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; margin: 10px 0; }
+svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+circle { fill: none; stroke-width: 9; stroke-linecap: round; }
+.circle-bg { stroke: #222c3d; }
+.circle-progress { transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease; }
+
+.name-label { position: absolute; text-align: center; width: 80%; font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
+.card-footer { text-align: center; width: 100%; margin-top: 8px; }
+.time-in { font-size: 0.8rem; color: var(--text-sub); }
+.status-text { font-size: 0.85rem; font-weight: 700; margin-top: 4px; }
+
+.card.completed { border: 2px solid #ef4444; animation: neonPulse 1.2s infinite alternate ease-in-out; }
+.card.completed .name-label { color: #f87171; }
+
+@keyframes neonPulse {
+  0% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+  100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.95); }
+}
