@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Who's In? - Kumon of Hicksville</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #060c18;
+      --card-bg: #0b1426;
+      --text-main: #ffffff;
+      --text-sub: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Fredoka', 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 0 10px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-brand img {
+      height: 55px;
+      object-fit: contain;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #38ef7d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(56, 239, 125, 0.6);
+    }
+
+    .badge {
+      background: #081c2c;
+      color: #00f2fe;
+      padding: 10px 22px;
+      border-radius: 24px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: 1.5px solid #00f2fe;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 22px;
+      flex-grow: 1;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      border: 1px solid #1a273e;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .card:active { transform: scale(0.97); }
+
+    .circle-container {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 6px 0;
+    }
+
+    svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+    circle { fill: none; stroke-width: 9; stroke-linecap: round; }
+    .circle-bg { stroke: #121d33; }
+    .circle-progress { transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease; }
+
+    .name-label {
+      position: absolute;
+      text-align: center;
+      width: 82%;
+      word-wrap: break-word;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .card-footer { text-align: center; width: 100%; margin-top: 6px; }
+    .time-in { font-size: 0.85rem; color: var(--text-sub); }
+    .status-text { font-size: 0.95rem; font-weight: 700; margin-top: 4px; }
+
+    /* Blinking Neon Pulse when time is up */
+    .card.completed {
+      border: 2px solid #ff4b4b;
+      animation: neonGlow 1.2s infinite alternate ease-in-out;
+    }
+    .card.completed .name-label { color: #ff4b4b; text-shadow: 0 0 10px #ff4b4b; }
+
+    @keyframes neonGlow {
+      0% { box-shadow: 0 0 8px rgba(255, 75, 75, 0.4); }
+      100% { box-shadow: 0 0 28px rgba(255, 75, 75, 0.95); }
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+      font-size: 1.3rem;
+      min-height: 300px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-brand">
+      <img src="TransparentLOGO3.png" alt="Kumon Logo" onerror="this.style.display='none'">
+      <h1>WHO'S IN?</h1>
+    </div>
+    <div class="badge" id="activeCount">Active Students: 0</div>
+  </header>
+
+  <main class="grid-container" id="studentGrid">
+    <div class="empty-state">Loading active students...</div>
+  </main>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycDY0o23zb3D7qq_2kLZOFvc8AKMR5kVj-NZoB3DRVkLpb1Pf2SGURuJ-aGY5O1Ts0/exec?type=getDashboard";
+    const dismissedIds = new Set();
+    const colorPalette = ['#00f2fe', '#38ef7d', '#ffeb3b', '#a78bfa', '#ff007f', '#fb923c', '#2dd4bf', '#c084fc'];
+
+    function getColorForName(name) {
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      return colorPalette[Math.abs(hash) % colorPalette.length];
+    }
+
+    function getAllottedMinutes(subjects, days) {
+      if (subjects == 1 && days == 2) return 30;
+      if (subjects == 2 && days == 2) return 60;
+      if (subjects == 1 && days == 1) return 60;
+      if (subjects == 2 && days == 1) return 120;
+      return 30;
+    }
+
+    async function fetchAttendance() {
+      try {
+        const response = await fetch(APPS_SCRIPT_URL);
+        const data = await response.json();
+        processData(data);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      }
+    }
+
+    function processData(rows) {
+      const studentMap = {};
+
+      rows.forEach(row => {
+        if (!row || row.length < 6) return;
+        const [timestamp, studentId, studentName, subjects, days, action] = row;
+        const id = String(studentId).trim();
+        
+        if (dismissedIds.has(id)) return;
+
+        const time = new Date(String(timestamp).replace(' ', 'T'));
+
+        if (!studentMap[id] || studentMap[id].timestamp < time) {
+          studentMap[id] = {
+            id: id,
+            name: String(studentName).trim(),
+            subjects: parseInt(subjects),
+            days: parseInt(days),
+            action: String(action).trim().toLowerCase(),
+            checkInTime: time,
+            timestamp: time
+          };
+        }
+      });
+
+      const active = Object.values(studentMap).filter(s => s.action === 'check-in');
+      renderGrid(active);
+    }
+
+    function renderGrid(students) {
+      const grid = document.getElementById('studentGrid');
+      const activeCount = document.getElementById('activeCount');
+      activeCount.textContent = `Active Students: ${students.length}`;
+      grid.innerHTML = '';
+
+      if (students.length === 0) {
+        grid.innerHTML = `<div class="empty-state">No active students checked in right now.</div>`;
+        return;
+      }
+
+      const now = new Date();
+
+      students.forEach(student => {
+        const allotted = getAllottedMinutes(student.subjects, student.days);
+        const elapsed = Math.floor((now - student.checkInTime) / 60000);
+        const percent = Math.min(100, Math.max(0, Math.floor((elapsed / allotted) * 100)));
+        const isDone = elapsed >= allotted;
+
+        const radius = 52;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (percent / 100) * circumference;
+        const color = isDone ? '#ff4b4b' : getColorForName(student.name);
+
+        const card = document.createElement('div');
+        card.className = `card ${isDone ? 'completed' : ''}`;
+        card.onclick = () => {
+          if (confirm(`Dismiss ${student.name} from dashboard?`)) {
+            dismissedIds.add(student.id);
+            card.remove();
+            activeCount.textContent = `Active Students: ${document.querySelectorAll('.card').length}`;
+          }
+        };
+
+        card.innerHTML = `
+          <div class="circle-container">
+            <svg viewBox="0 0 120 120">
+              <circle class="circle-bg" cx="60" cy="60" r="${radius}" />
+              <circle class="circle-progress" cx="60" cy="60" r="${radius}" stroke="${color}" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" />
+            </svg>
+            <div class="name-label">${student.name}</div>
+          </div>
+          <div class="card-footer">
+            <div class="time-in">In: ${student.checkInTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+            <div class="status-text" style="color: ${color}">${isDone ? "TIME'S UP!" : `${elapsed}m / ${allotted}m`}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    fetchAttendance();
+    setInterval(fetchAttendance, 10000);
+  </script>
+</body>
+</html>

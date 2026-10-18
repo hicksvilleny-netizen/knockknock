@@ -1,0 +1,115 @@
+function doGet(e) {
+
+  // 1. DASHBOARD REQUEST: Check if request is coming from whos_in.html
+  if (e.parameter.type === "getDashboard") {
+    return getActiveAttendance();
+  }
+
+  var personId = (e && e.parameter && e.parameter.id) ? String(e.parameter.id).trim() : "";
+  var isKiosk = (e && e.parameter && e.parameter.mode === "kiosk");
+  
+  if (!personId) {
+    return respond("ERROR", "No Student ID provided.", "error", isKiosk);
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var peopleSheet = ss.getSheetByName("People");
+  var attendanceSheet = ss.getSheetByName("Attendance");
+
+  if (!peopleSheet || !attendanceSheet) {
+    return respond("ERROR", "Missing required sheet tab(s).", "error", isKiosk);
+  }
+
+  var peopleData = peopleSheet.getDataRange().getValues();
+  var personName = "";
+  var active = false;
+  var subjects = 1; // Default fallback
+  var days = 2;     // Default fallback
+
+  // Search for Student ID in Column A of the People sheet
+  for (var i = 1; i < peopleData.length; i++) {
+    var id = String(peopleData[i][0]).trim();
+    if (id === personId) {
+      personName = String(peopleData[i][1]).trim(); // Column B: Name
+      // Assumes Column C: Active, Column D: Subjects, Column E: Days
+      active = String(peopleData[i][2]).trim().toUpperCase() === "TRUE";
+      subjects = peopleData[i][3] || 1; // Column D: Subjects count (e.g. 1 or 2)
+      days = peopleData[i][4] || 2;     // Column E: Days count (e.g. 1 or 2)
+      break;
+    }
+  }
+
+  if (personName === "") {
+    return respond("NOT FOUND", "ID " + personId + " not recognized.", "error", isKiosk);
+  }
+
+  if (!active) {
+    return respond("INACTIVE", personName + " is currently inactive.", "warning", isKiosk);
+  }
+
+  // --- ATTENDANCE LOGIC (Check Last Entry & 1-Minute Guard) ---
+  var attendanceData = attendanceSheet.getDataRange().getValues();
+  var lastStatus = "";
+  var lastTimestamp = null;
+
+  // Search backward from bottom to find student's last scan
+  for (var j = attendanceData.length - 1; j >= 1; j--) {
+    if (String(attendanceData[j][1]).trim() === personId) {
+      lastTimestamp = new Date(attendanceData[j][0]);
+      lastStatus = String(attendanceData[j][5]).trim(); // Column F (index 5) is Action
+      break;
+    }
+  }
+
+  var now = new Date();
+
+  // 1. Check for Duplicate Scan within 300 seconds
+  if (lastTimestamp && (now.getTime() - lastTimestamp.getTime()) < 300000) {
+    return respond("DUPLICATE", personName + " already scanned recently. Please wait a minute.", "warning", isKiosk);
+  }
+
+  // 2. Determine Action (Toggle Checked In / Checked Out)
+  var action = "Checked In";
+  if (lastStatus === "Checked In") {
+    action = "Checked Out";
+  }
+
+  // --- RECORD 6-COLUMN ATTENDANCE STAMP ---
+  // Column A: Timestamp | B: ID | C: Name | D: Subjects | E: Days | F: Action
+  attendanceSheet.appendRow([now, personId, personName, subjects, days, action]);
+
+  var successMsg = (action === "Checked In") ? "Welcome, " + personName + "!" : "Goodbye, " + personName + "!";
+  return respond("SUCCESS", successMsg, "success", isKiosk);
+}
+
+function respond(status, message, type, isKiosk) {
+  if (isKiosk) {
+    var payload = {
+      status: status.toLowerCase(),
+      message: message,
+      type: type
+    };
+    return ContentService.createTextOutput(JSON.stringify(payload))
+      .setMimeType(ContentService.MimeType.JSON);
+  } else {
+    var html = "<h2>" + status + "</h2><p>" + message + "</p>";
+    return HtmlService.createHtmlOutput(html);
+  }
+}
+// =========================================================================
+// 3. NEW ADDITION: Place helper function below your existing doGet(e)
+// =========================================================================
+function getActiveAttendance() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var logSheet = ss.getSheetByName("Attendance");
+  var data = logSheet.getDataRange().getValues();
+  data.shift(); // Remove header row
+  
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 4. KEEP-ALIVE TRIGGER (Prevents Google Script container cold starts)
+function keepAlive() {
+  Logger.log("Keeping container warm");
+}
