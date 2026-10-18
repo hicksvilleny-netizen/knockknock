@@ -183,34 +183,63 @@
       }
     }
 
-    function processData(rows) {
-      const studentMap = {};
+ function processData(rows) {
+    const studentMap = {};
 
-      rows.forEach(row => {
-        if (!row || row.length < 6) return;
-        const [timestamp, studentId, studentName, subjects, days, action] = row;
-        const id = String(studentId).trim();
+    rows.forEach(row => {
+      if (!row || row.length < 6) return;
+      const [timestamp, studentId, studentName, subjects, days, action] = row;
+      const id = String(studentId).trim();
+      
+      if (dismissedIds.has(id)) return;
+
+      // Safely parse timestamps from Google Sheets
+      let time;
+      if (timestamp instanceof Date) {
+        time = timestamp;
+      } else {
+        const str = String(timestamp).trim();
+        time = new Date(str);
         
-        if (dismissedIds.has(id)) return;
-
-        const time = new Date(String(timestamp).replace(' ', 'T'));
-
-        if (!studentMap[id] || studentMap[id].timestamp < time) {
-          studentMap[id] = {
-            id: id,
-            name: String(studentName).trim(),
-            subjects: parseInt(subjects),
-            days: parseInt(days),
-            action: String(action).trim().toLowerCase(),
-            checkInTime: time,
-            timestamp: time
-          };
+        // Fallback parser if standard Date constructor returns NaN
+        if (isNaN(time.getTime())) {
+          const parts = str.split(' ');
+          if (parts.length >= 2) {
+            const [dateParts, timeParts] = [parts[0].split('/'), parts[1].split(':')];
+            if (dateParts.length === 3 && timeParts.length >= 2) {
+              time = new Date(
+                dateParts[2],
+                dateParts[0] - 1,
+                dateParts[1],
+                timeParts[0],
+                timeParts[1],
+                timeParts[2] || 0
+              );
+            }
+          }
         }
-      });
+      }
 
-      const active = Object.values(studentMap).filter(s => s.action === 'check-in');
-      renderGrid(active);
-    }
+      if (!time || isNaN(time.getTime())) return;
+
+      // Store/update to keep the student's latest scan entry
+      if (!studentMap[id] || studentMap[id].timestamp < time) {
+        studentMap[id] = {
+          id: id,
+          name: String(studentName).trim(),
+          subjects: parseInt(subjects) || 1,
+          days: parseInt(days) || 2,
+          action: String(action).trim().toLowerCase(),
+          checkInTime: time,
+          timestamp: time
+        };
+      }
+    });
+
+    // Filter for active check-ins only
+    const active = Object.values(studentMap).filter(s => s.action === 'checked in');
+    renderGrid(active);
+  }
 
     function renderGrid(students) {
       const grid = document.getElementById('studentGrid');
