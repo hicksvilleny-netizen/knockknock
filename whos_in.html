@@ -50,10 +50,11 @@
     }
 
 .brand-logo {
-  height: 70px; /* Increased display size */
+  height: 75px;
   width: auto;
   object-fit: contain;
-filter: brightness(1.8) contrast(1.2) drop-shadow(0 0 10px rgba(0, 242, 254, 0.7));
+  /* Inverts black text to white and adds a vibrant cyan neon glow */
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 10px #00f2fe);
   transition: transform 0.3s ease;
 }
 
