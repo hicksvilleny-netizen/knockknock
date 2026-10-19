@@ -53,9 +53,13 @@
   height: 70px; /* Increased display size */
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5)); /* Creates a floating 3D effect */
+filter: brightness(1.8) contrast(1.2) drop-shadow(0 0 10px rgba(0, 242, 254, 0.7));
+  transition: transform 0.3s ease;
 }
 
+.brand-logo:hover {
+  transform: scale(1.05);
+}
 
 
     .header-title {
@@ -221,7 +225,7 @@
 
   <header class="header-bar">
     <div class="header-left">
-      <img src="TransparentLOGO0.png" alt="Kumon Logo" class="brand-logo" />
+      <img src="TransparentLOGO001.png" alt="Kumon Logo" class="brand-logo" />
       <h1 class="header-title">WHO'S IN?</h1>
     </div>
     
