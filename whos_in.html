@@ -50,9 +50,14 @@
     }
 
     .brand-logo {
-      height: 48px;
+      height: 64px; /* Increased from 42px to make it larger and more prominent */
+      width: auto;
       object-fit: contain;
+      mix-blend-mode: screen; /* Blends out light/checkered background pixels */
+      filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.3)); /* Adds a subtle floating glow */
     }
+
+
 
     .header-title {
       font-size: 1.8rem;
