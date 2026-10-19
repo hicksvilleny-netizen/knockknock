@@ -150,8 +150,16 @@
       stroke-width: 8;
       stroke-linecap: round;
       transition: stroke-dashoffset 0.6s ease;
+      /* Add the animation line here */
+      animation: ringPulse 3s infinite ease-in-out;
     }
-
+/* Add the keyframes rule right below it */
+    @keyframes ringPulse {
+      0% { filter: drop-shadow(0 0 2px currentColor); }
+      50% { filter: drop-shadow(0 0 8px currentColor); }
+      100% { filter: drop-shadow(0 0 2px currentColor); }
+    }
+    
     .name-label {
       position: absolute;
       top: 50%;
