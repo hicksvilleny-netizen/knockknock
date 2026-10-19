@@ -49,13 +49,14 @@
       gap: 16px;
     }
 
-    .brand-logo {
-      height: 64px; /* Increased from 42px to make it larger and more prominent */
-      width: auto;
-      object-fit: contain;
-      mix-blend-mode: screen; /* Blends out light/checkered background pixels */
-      filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.3)); /* Adds a subtle floating glow */
-    }
+.brand-logo {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
+  /* Adjust these percentage values (Top Right Bottom Left) to crop off the checkered border */
+  clip-path: inset(5% 5% 5% 5% round 8px); 
+  filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.4));
+}
 
 
 
