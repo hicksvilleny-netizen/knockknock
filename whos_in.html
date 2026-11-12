@@ -227,7 +227,7 @@ filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 10px #00f2fe);
   <header class="header-bar">
     <div class="header-left">
       <img src="NoBgLOGO002.png" alt="Kumon Logo" class="brand-logo" />
-      <h1 class="header-title">WHO'S IN?</h1>
+      <h1 class="header-title">Who's In?</h1>
     </div>
     
     <div class="header-center">
@@ -380,14 +380,29 @@ filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 10px #00f2fe);
 
         const card = document.createElement('div');
         card.className = `card ${isDone ? 'completed' : ''}`;
-        card.onclick = () => {
-          if (confirm(`Dismiss ${student.name} from dashboard?`)) {
+
+       card.onclick = () => {
+          if (confirm(`Dismiss and check out ${student.name}?`)) {
+            // 1. Keep local dismissed state and remove card immediately
             dismissedIds.add(student.id);
             card.remove();
-            if (activeCount) activeCount.textContent = `Active Students: ${document.querySelectorAll('.card').length}`;
+            if (activeCount) {
+              activeCount.textContent = `Active Students: ${document.querySelectorAll('.card').length}`;
+            }
+
+            // 2. Log the check-out in Google Sheets Attendance journal
+            // NOTE: Match SCRIPT_URL to the variable name at the top of your whos_in.html script
+            const checkoutUrl = `${SCRIPT_URL}?type=forceCheckout&id=${encodeURIComponent(student.id)}`;
+            fetch(checkoutUrl)
+              .then(response => response.json())
+              .then(data => {
+                console.log("Manual checkout logged:", data);
+                // Optional: remove from local dismissedIds once saved so if they return later today, they show up again
+                dismissedIds.delete(student.id);
+              })
+              .catch(err => console.error("Failed to record manual checkout:", err));
           }
         };
-
         card.innerHTML = `
           <div class="circle-container">
             <svg viewBox="0 0 120 120">
