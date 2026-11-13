@@ -307,6 +307,34 @@
       },
       false
     );
+    
+// --- EYOYO EY-034 HARDWARE SCANNER LISTENER ---
+    let hardwareScanBuffer = "";
+    let hardwareScanTimer = null;
+
+    document.addEventListener("keydown", function (e) {
+      // Ignore modifier keys (Shift, Ctrl, Alt, etc.)
+      if (e.key.length > 1 && e.key !== "Enter") return;
+
+      if (e.key === "Enter") {
+        if (hardwareScanBuffer.length > 0) {
+          e.preventDefault();
+          const scannedId = hardwareScanBuffer.trim();
+          hardwareScanBuffer = "";
+          clearTimeout(hardwareScanTimer);
+          onScanSuccess(scannedId); // Feeds directly into your existing kiosk logic!
+        }
+      } else {
+        hardwareScanBuffer += e.key;
+        // Reset buffer if keys arrive too slowly (prevents accidental manual keystrokes from lingering)
+        clearTimeout(hardwareScanTimer);
+        hardwareScanTimer = setTimeout(() => {
+          hardwareScanBuffer = "";
+        }, 300);
+      }
+    });
+    // ---------------------------------------------
+
 
     html5QrcodeScanner.render(onScanSuccess);
   </script>
