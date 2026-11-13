@@ -392,7 +392,7 @@ filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 10px #00f2fe);
 
             // 2. Log the check-out in Google Sheets Attendance journal
             // NOTE: Match SCRIPT_URL to the variable name at the top of your whos_in.html script
-            const checkoutUrl = `${SCRIPT_URL}?type=forceCheckout&id=${encodeURIComponent(student.id)}`;
+            const checkoutUrl = `${APPS_SCRIPT_URL}?type=forceCheckout&id=${encodeURIComponent(student.id)}`;
             fetch(checkoutUrl)
               .then(response => response.json())
               .then(data => {
